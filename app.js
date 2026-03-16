@@ -3,6 +3,7 @@ const STORAGE_KEY = "wy_toefl_srs_v1";
 let allWords = [];
 let queue = [];
 let currentIndex = 0;
+let wordExamples = {}; // word -> [{en, zh, hint}]
 let progress = {
   cards: {}, // word -> { easiness, interval, repetitions, nextReview, lastRating, reviewCount }
   stats: {
@@ -42,11 +43,34 @@ function resetDailyStatsIfNeeded() {
 }
 
 async function loadWords() {
+  // 优先使用通过 words_data.js 导出的全局数据（兼容 file:// 直接打开）
+  if (window.WORDS_DATA) {
+    allWords = window.WORDS_DATA;
+    return;
+  }
   const res = await fetch("./words.json");
   if (!res.ok) {
     throw new Error("找不到 words.json，请先运行解析脚本");
   }
   allWords = await res.json();
+}
+
+async function loadExamples() {
+  try {
+    // 优先使用通过 examples_data.js 导出的全局数据
+    if (window.EXAMPLES_DATA && typeof window.EXAMPLES_DATA === "object") {
+      wordExamples = window.EXAMPLES_DATA;
+      return;
+    }
+    const res = await fetch("./examples.json");
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data && typeof data === "object") {
+      wordExamples = data;
+    }
+  } catch (e) {
+    console.warn("无法加载自定义例句 examples.json，已忽略。", e);
+  }
 }
 
 function getCardState(word) {
@@ -165,50 +189,15 @@ function stripChinese(html) {
 
 function generateExamples(wordObj) {
   const w = wordObj.word;
-  const stage = wordObj.stage || "stage2";
 
-  // 根据阶段简单区分生活 / 学术 / 抽象场景
-  const scenes =
-    stage === "stage1"
-      ? [
-          {
-            en: `On the way to the airport, she suddenly realized she had to ${w} her old plan and start again.`,
-            zh: `在去机场的路上，她突然意识到必须放弃原来的计划，重新开始。`,
-            hint: "生活场景：临时改变计划",
-          },
-          {
-            en: `During daily conversations, people rarely use this word, but once you know it, you can ${w} it naturally in speaking.`,
-            zh: `在日常对话中人们很少用这个词，但一旦掌握，你也可以在口语中自然地用出来。`,
-            hint: "日常口语：刻意输出新词",
-          },
-        ]
-      : stage === "stage2"
-      ? [
-          {
-            en: `In a TOEFL listening passage, a professor might ${w} a key point to show how important it is in real research.`,
-            zh: `在托福听力材料中，教授可能会用这个词来强调某个关键点在真实研究中的重要性。`,
-            hint: "课堂场景：教授讲解概念",
-          },
-          {
-            en: `When you write an academic paragraph, you can ${w} this idea to make your argument more precise.`,
-            zh: `写学术段落时，你可以用这个词来表达这个观点，使论证更精确。`,
-            hint: "写作场景：学术段落",
-          },
-        ]
-      : [
-          {
-            en: `In a formal report, the manager chose to ${w} a complex problem in just one clear sentence.`,
-            zh: `在一份正式报告中，经理选择用一句清晰的话来概括这个复杂问题。`,
-            hint: "职场场景：正式报告",
-          },
-          {
-            en: `High‑level reading passages often ${w} abstract ideas that are hard to translate into simple Chinese.`,
-            zh: `高级阅读文章经常用这个词来表达一些很难直接翻译成简单中文的抽象概念。`,
-            hint: "阅读场景：抽象概念",
-          },
-        ];
+  // 1) 有自定义例句则优先使用
+  if (wordExamples[w] && Array.isArray(wordExamples[w])) {
+    return wordExamples[w];
+  }
 
-  return scenes;
+  // 目前不再为所有单词自动生成模板例句，避免语义不准确
+  // 没有专属例句时返回空数组，界面不显示例句区域
+  return [];
 }
 
 function renderCurrentCard() {
@@ -217,7 +206,9 @@ function renderCurrentCard() {
   const state = getCardState(wordObj.word);
 
   document.getElementById("wordText").textContent = wordObj.word;
-  document.getElementById("phonetic").textContent = "";
+  document.getElementById("phonetic").textContent = wordObj.phonetic
+    ? `/${wordObj.phonetic}/`
+    : "";
 
   const qaBlock = document.getElementById("qaBlock");
   const showSyn = document.getElementById("showSynonymsToggle").checked;
@@ -238,8 +229,8 @@ function renderCurrentCard() {
   const examplesBlock = document.getElementById("examplesBlock");
   const showExamples = document.getElementById("showExamplesToggle")?.checked;
   if (examplesBlock) {
-    if (showExamples) {
-      const examples = generateExamples(wordObj);
+    const examples = generateExamples(wordObj);
+    if (showExamples && examples && examples.length > 0) {
       let htmlEx = "<h3>Scene Examples</h3>";
       examples.forEach((ex) => {
         htmlEx += `<div class="example-item">
@@ -562,6 +553,28 @@ function setupInteractions() {
       renderStats();
       renderCurrentCard();
     });
+
+  const speakBtn = document.getElementById("speakBtn");
+  if (speakBtn && "speechSynthesis" in window) {
+    speakBtn.addEventListener("click", () => {
+      if (!queue.length) return;
+      const wordObj = queue[currentIndex];
+      const utter = new SpeechSynthesisUtterance(wordObj.word);
+      utter.lang = "en-US";
+      const voices = window.speechSynthesis.getVoices();
+      const cand =
+        voices.find(
+          (v) =>
+            v.lang === "en-US" &&
+            /female|woman|girl|Samantha|Karen|Joanna|Salli/i.test(v.name)
+        ) || voices.find((v) => v.lang === "en-US");
+      if (cand) utter.voice = cand;
+      utter.rate = 0.95;
+      utter.pitch = 1.05;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utter);
+    });
+  }
 }
 
 async function main() {
@@ -571,6 +584,7 @@ async function main() {
 
   try {
     await loadWords();
+    await loadExamples();
   } catch (e) {
     alert(
       "无法加载 words.json，请先在项目根目录运行：\n\npython parse_wang_yumei_vocab.py"
