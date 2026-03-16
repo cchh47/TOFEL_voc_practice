@@ -2,7 +2,7 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <title>TOEFL 词汇记忆实验室</title>
+    <title>TOEFL 词汇 · 词频+遗忘曲线背单词</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="./style.css" />
   </head>
@@ -90,7 +90,12 @@
 
             <div class="card-body">
               <div class="word-main">
-                <div id="wordText" class="word-text">加载中…</div>
+                <div class="word-text-row">
+                  <div id="wordText" class="word-text">加载中…</div>
+                  <button id="speakBtn" class="ghost-btn speak-btn" title="朗读单词">
+                    ▶︎
+                  </button>
+                </div>
                 <div id="phonetic" class="word-phonetic"></div>
               </div>
               <div id="qaBlock" class="qa-block"></div>
@@ -162,6 +167,8 @@
       </footer>
     </main>
 
+    <script src="./words_data.js"></script>
+    <script src="./examples_data.js"></script>
     <script src="./app.js"></script>
   </body>
   </html>
