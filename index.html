@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>TOEFL 词汇记忆实验室</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="background-layer"></div>
+    <main class="app-shell">
+      <header class="app-header">
+        <div class="brand">
+          <div class="brand-mark">W</div>
+          <div class="brand-text">
+            <h1>Wang Yumei TOEFL Lab</h1>
+            <p>词频优先 + 遗忘曲线的英语单词训练场</p>
+          </div>
+        </div>
+        <div class="header-controls">
+          <div class="mode-toggle">
+            <label>
+              学习模式
+              <select id="modeSelect">
+                <option value="learn">新词优先（按词频）</option>
+                <option value="review">只复习到期单词</option>
+                <option value="mixed">混合：新词 + 复习</option>
+              </select>
+            </label>
+          </div>
+          <div class="session-size">
+            <label>
+              每轮数量
+              <input
+                id="sessionSizeInput"
+                type="number"
+                min="5"
+                max="100"
+                value="20"
+              />
+            </label>
+          </div>
+        </div>
+      </header>
+
+      <section class="layout">
+        <aside class="sidebar">
+          <div class="stats-card">
+            <h2>今日进度</h2>
+            <div class="stats-grid">
+              <div class="stat">
+                <span class="stat-label">已学单词</span>
+                <span class="stat-value" id="learnedCount">0</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">今日复习</span>
+                <span class="stat-value" id="reviewedToday">0</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">待复习</span>
+                <span class="stat-value" id="dueCount">0</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">掌握度</span>
+                <span class="stat-value" id="masteryPercent">0%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="queue-card">
+            <h2>当前队列</h2>
+            <ul id="queueList" class="queue-list"></ul>
+          </div>
+
+          <div class="meta-card">
+            <h2>当前单词信息</h2>
+            <div id="metaInfo"></div>
+          </div>
+        </aside>
+
+        <section class="card-panel">
+          <div class="card-shell">
+            <div class="card-header">
+              <span id="stageBadge" class="badge">Stage 1</span>
+              <span id="freqBadge" class="badge badge-soft">词频 -</span>
+              <button id="toggleLangBtn" class="ghost-btn">
+                显示/隐藏中文
+              </button>
+            </div>
+
+            <div class="card-body">
+              <div class="word-main">
+                <div id="wordText" class="word-text">加载中…</div>
+                <div id="phonetic" class="word-phonetic"></div>
+              </div>
+              <div id="qaBlock" class="qa-block"></div>
+              <div id="examplesBlock" class="examples-block"></div>
+            </div>
+
+            <div class="answer-helpers">
+              <label class="helper-toggle">
+                <input type="checkbox" id="showSynonymsToggle" checked />
+                显示近义词/短语
+              </label>
+              <label class="helper-toggle">
+                <input type="checkbox" id="showExamplesToggle" checked />
+                显示场景化例句
+              </label>
+            </div>
+
+            <div class="rating-panel">
+              <button class="rating-btn rating-again" data-rating="0">
+                完全陌生
+                <span>1 分钟后再见</span>
+              </button>
+              <button class="rating-btn rating-hard" data-rating="1">
+                很吃力
+                <span>10 分钟后</span>
+              </button>
+              <button class="rating-btn rating-good" data-rating="2">
+                基本记住
+                <span>1 天后</span>
+              </button>
+              <button class="rating-btn rating-easy" data-rating="3">
+                非常熟
+                <span>3 天后+</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="dashboard-card">
+            <div class="dashboard-header">
+              <h2>数据面板</h2>
+              <span class="dashboard-subtitle">掌握等级 × 阶段 分布</span>
+            </div>
+            <div class="dashboard-section">
+              <div class="dashboard-legend">
+                <span class="legend-dot legend-new"></span> 新词
+                <span class="legend-dot legend-learning"></span> 学习中
+                <span class="legend-dot legend-solid"></span> 已掌握
+              </div>
+              <div id="stageBars" class="stage-bars"></div>
+            </div>
+            <div class="dashboard-section">
+              <div class="dashboard-legend">
+                <span class="legend-dot legend-again"></span> 完全陌生(0)
+                <span class="legend-dot legend-hard"></span> 吃力(1)
+                <span class="legend-dot legend-good"></span> 记住(2)
+                <span class="legend-dot legend-easy"></span> 熟练(3)
+              </div>
+              <div id="ratingBars" class="rating-bars"></div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <footer class="app-footer">
+        <span>本地离线运行 · 进度保存在浏览器，不上传任何数据</span>
+        <button id="resetProgressBtn" class="danger-link">
+          清空进度（从头开始）
+        </button>
+      </footer>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+  </html>
+
